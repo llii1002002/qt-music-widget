@@ -42,3 +42,6 @@ stderr.log
 # - cover_*.png 封面素材、shot_full.png / user_shot.png 效果截图
 # - build_debug.bat / build_release.bat 构建脚本
 # - MusicDesktop_架构图.html / MusicDesktop_数据溯源图.html 设计文档
+
+# Qt Quick 编译器缓存
+*.qmlc
