@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MusicDesktop 数据溯源图（L1→L5）</title>
+<style>
+  html,body{margin:0;padding:0;background:#0b101c;font-family:"Microsoft YaHei UI","Segoe UI",sans-serif;color:#dfe7f5;}
+  .wrap{width:100%;max-width:1700px;margin:0 auto;padding:16px;box-sizing:border-box;}
+  h1{font-size:24px;margin:10px 0 4px;color:#eef2ff;text-align:center;}
+  .sub{text-align:center;font-size:13.5px;color:#8fa3c8;margin:0 0 14px;}
+  svg{width:100%;height:auto;display:block;}
+  .note{font-size:12px;color:#5d6d8f;text-align:center;margin-top:10px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>MusicDesktop 数据溯源图 — 从界面元素逆流追到系统 API（L1 → L5）</h1>
+  <p class="sub">阅读顺序：从上往下=溯源方向；箭头向上=数据实际流动方向（事件驱动推送）</p>
+  <svg viewBox="0 0 1600 1010" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="自顶向下数据溯源图">
+    <defs>
+      <marker id="s-cyan" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#35c6e8"/></marker>
+      <marker id="s-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#5ee08a"/></marker>
+      <marker id="s-orange" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#ffb454"/></marker>
+      <marker id="s-purple" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#b58bff"/></marker>
+      <marker id="s-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#6aa6ff"/></marker>
+    </defs>
+
+    <rect x="0" y="0" width="1600" height="1010" fill="#0b101c"/>
+    <text x="800" y="36" text-anchor="middle" font-size="23" font-weight="bold" fill="#eef2ff">数据溯源：你看到的每个像素 → 一路追到操作系统 API</text>
+
+    <!-- 泳道标题 -->
+    <text x="280" y="62" text-anchor="middle" font-size="15" font-weight="bold" fill="#35c6e8">① 歌词流</text>
+    <text x="571" y="62" text-anchor="middle" font-size="15" font-weight="bold" fill="#b58bff">② 封面流</text>
+    <text x="862" y="62" text-anchor="middle" font-size="15" font-weight="bold" fill="#6aa6ff">③ 播放状态流</text>
+    <text x="1153" y="62" text-anchor="middle" font-size="15" font-weight="bold" fill="#5ee08a">④ 频谱流</text>
+    <text x="1444" y="62" text-anchor="middle" font-size="15" font-weight="bold" fill="#ff8fb3">⑤ 主题配色流</text>
+
+    <!-- 层标签 -->
+    <rect x="20" y="74" width="112" height="140" rx="8" fill="#ffffff08"/>
+    <text x="76" y="112" text-anchor="middle" font-size="14.5" font-weight="bold" fill="#c9d6f0">L1</text>
+    <text x="76" y="134" text-anchor="middle" font-size="12.5" fill="#b9c8e8">QML 界面层</text>
+    <text x="76" y="152" text-anchor="middle" font-size="11" fill="#7d8fb3">主线程渲染</text>
+    <rect x="20" y="240" width="112" height="140" rx="8" fill="#ffffff08"/>
+    <text x="76" y="278" text-anchor="middle" font-size="14.5" font-weight="bold" fill="#c9d6f0">L2</text>
+    <text x="76" y="300" text-anchor="middle" font-size="12.5" fill="#b9c8e8">核心门面层</text>
+    <text x="76" y="318" text-anchor="middle" font-size="11" fill="#7d8fb3">主线程</text>
+    <rect x="20" y="410" width="112" height="140" rx="8" fill="#ffffff08"/>
+    <text x="76" y="448" text-anchor="middle" font-size="14.5" font-weight="bold" fill="#c9d6f0">L3</text>
+    <text x="76" y="470" text-anchor="middle" font-size="12.5" fill="#b9c8e8">业务引擎层</text>
+    <text x="76" y="488" text-anchor="middle" font-size="11" fill="#7d8fb3">主线程·线程池</text>
+    <rect x="20" y="580" width="112" height="140" rx="8" fill="#ffffff08"/>
+    <text x="76" y="618" text-anchor="middle" font-size="14.5" font-weight="bold" fill="#c9d6f0">L4</text>
+    <text x="76" y="640" text-anchor="middle" font-size="12.5" fill="#b9c8e8">系统工作线程</text>
+    <text x="76" y="658" text-anchor="middle" font-size="11" fill="#7d8fb3">QThread × 3</text>
+    <rect x="20" y="750" width="112" height="140" rx="8" fill="#ffffff08"/>
+    <text x="76" y="788" text-anchor="middle" font-size="14.5" font-weight="bold" fill="#c9d6f0">L5</text>
+    <text x="76" y="810" text-anchor="middle" font-size="12.5" fill="#b9c8e8">Windows 系统层</text>
+    <text x="76" y="828" text-anchor="middle" font-size="11" fill="#7d8fb3">原生 API</text>
+
+    <!-- 泳道1 歌词流 x=145 -->
+    <g>
+      <rect x="145" y="74" width="270" height="140" rx="10" fill="#141a2c" stroke="#35c6e8" stroke-width="1.8"/>
+      <text x="161" y="100" font-size="13.5" font-weight="bold" fill="#9fe4ff">LyricView 歌词行</text>
+      <text x="161" y="122" font-size="12" fill="#b9c8e8">滚动=(index−scroll)×行距</text>
+      <text x="161" y="142" font-size="12" fill="#b9c8e8">当前行放大+加粗高亮</text>
+      <text x="161" y="162" font-size="12" fill="#b9c8e8">无词→歌名/歌手兜底</text>
+      <text x="161" y="186" font-size="11.5" fill="#7d8fb3">Behaviors 平滑动画</text>
+      <rect x="145" y="240" width="270" height="140" rx="10" fill="#182542" stroke="#4f8cff" stroke-width="1.8"/>
+      <text x="161" y="266" font-size="13.5" font-weight="bold" fill="#7fb0ff">player.lyricTexts</text>
+      <text x="161" y="288" font-size="12" fill="#c9d6f0">currentLine / lyricScroll</text>
+      <text x="161" y="308" font-size="12" fill="#c9d6f0">noLyrics 提示开关</text>
+      <rect x="145" y="410" width="270" height="140" rx="10" fill="#141a2c" stroke="#2d3b58"/>
+      <text x="161" y="436" font-size="13.5" font-weight="bold" fill="#e8eefb">LyricsEngine 引擎</text>
+      <text x="161" y="458" font-size="12" fill="#b9c8e8">scrollAt→小数行号</text>
+      <text x="161" y="478" font-size="12" fill="#b9c8e8">LRC 多时间戳解析排序</text>
+      <rect x="145" y="580" width="270" height="140" rx="10" fill="#141a2c" stroke="#2d3b58"/>
+      <text x="161" y="606" font-size="13.5" font-weight="bold" fill="#e8eefb">QtConcurrent 扫描打分</text>
+      <text x="161" y="628" font-size="12" fill="#b9c8e8">兜底网易云API搜索取词</text>
+      <text x="161" y="648" font-size="12" fill="#b9c8e8">token 防切歌乱序</text>
+      <rect x="145" y="750" width="270" height="140" rx="10" fill="#10162a" stroke="#2a3852"/>
+      <text x="161" y="776" font-size="13.5" font-weight="bold" fill="#e8eefb">歌词源</text>
+      <text x="161" y="798" font-size="12" fill="#b9c8e8">本地 .lrc 文件(≤4000)</text>
+      <text x="161" y="818" font-size="12" fill="#b9c8e8">网易云 Web API</text>
+      <line x1="280" y1="220" x2="280" y2="234" stroke="#35c6e8" stroke-width="2.5" marker-end="url(#s-cyan)"/>
+      <line x1="280" y1="386" x2="280" y2="400" stroke="#35c6e8" stroke-width="2.5" marker-end="url(#s-cyan)"/>
+      <line x1="280" y1="556" x2="280" y2="570" stroke="#35c6e8" stroke-width="2.5" marker-end="url(#s-cyan)"/>
+      <line x1="280" y1="726" x2="280" y2="740" stroke="#35c6e8" stroke-width="2.5" marker-end="url(#s-cyan)"/>
+    </g>
+
+    <!-- 泳道2 封面流 x=436 -->
+    <g>
+      <rect x="436" y="74" width="270" height="140" rx="10" fill="#141a2c" stroke="#b58bff" stroke-width="1.8"/>
+      <text x="452" y="100" font-size="13.5" font-weight="bold" fill="#d9c4ff">AlbumCover 黑胶封面</text>
+      <text x="452" y="122" font-size="12" fill="#b9c8e8">24s 旋转 · 圆形遮罩</text>
+      <text x="452" y="142" font-size="12" fill="#b9c8e8">同心环·占位♪·暂停点</text>
+      <rect x="436" y="240" width="270" height="140" rx="10" fill="#182542" stroke="#4f8cff" stroke-width="1.8"/>
+      <text x="452" y="266" font-size="13.5" font-weight="bold" fill="#7fb0ff">player.coverUrl</text>
+      <text x="452" y="288" font-size="12" fill="#c9d6f0">image://cover/key#版本</text>
+      <rect x="436" y="410" width="270" height="140" rx="10" fill="#141a2c" stroke="#2d3b58"/>
+      <text x="452" y="436" font-size="13.5" font-weight="bold" fill="#e8eefb">CoverImageProvider</text>
+      <text x="452" y="458" font-size="12" fill="#b9c8e8">缓存最近12张封面</text>
+      <text x="452" y="478" font-size="12" fill="#b9c8e8">按请求尺寸缩放</text>
+      <rect x="436" y="580" width="270" height="140" rx="10" fill="#141a2c" stroke="#2d3b58"/>
+      <text x="452" y="606" font-size="13.5" font-weight="bold" fill="#e8eefb">MediaSessionWorker</text>
+      <text x="452" y="628" font-size="12" fill="#b9c8e8">切歌 500ms 宽限抓图</text>
+      <text x="452" y="648" font-size="12" fill="#b9c8e8">MD5(歌key)作缓存键</text>
+      <text x="452" y="668" font-size="12" fill="#b9c8e8">先快照后封面防误判</text>
+      <rect x="436" y="750" width="270" height="140" rx="10" fill="#10162a" stroke="#2a3852"/>
+      <text x="452" y="776" font-size="13.5" font-weight="bold" fill="#e8eefb">SMTC Thumbnail</text>
+      <text x="452" y="798" font-size="12" fill="#b9c8e8">缩略图流 ≤8MB</text>
+      <line x1="571" y1="220" x2="571" y2="234" stroke="#b58bff" stroke-width="2.5" marker-end="url(#s-purple)"/>
+      <line x1="571" y1="386" x2="571" y2="400" stroke="#b58bff" stroke-width="2.5" marker-end="url(#s-purple)"/>
+      <line x1="571" y1="556" x2="571" y2="570" stroke="#b58bff" stroke-width="2.5" marker-end="url(#s-purple)"/>
+      <line x1="571" y1="726" x2="571" y2="740" stroke="#b58bff" stroke-width="2.5" marker-end="url(#s-purple)"/>
+    </g>
+
+    <!-- 泳道3 播放状态流 x=727 -->
+    <g>
+      <rect x="727" y="74" width="270" height="140" rx="10" fill="#141a2c" stroke="#6aa6ff" stroke-width="1.8"/>
+      <text x="743" y="100" font-size="13.5" font-weight="bold" fill="#9cc2ff">旋转/暂停点/歌词节奏</text>
+      <text x="743" y="122" font-size="12" fill="#b9c8e8">频谱呼吸动画开关</text>
+      <rect x="727" y="240" width="270" height="140" rx="10" fill="#182542" stroke="#4f8cff" stroke-width="1.8"/>
+      <text x="743" y="266" font-size="13.5" font-weight="bold" fill="#7fb0ff">player.playing</text>
+      <text x="743" y="288" font-size="12" fill="#c9d6f0">positionMs / durationMs</text>
+      <rect x="727" y="410" width="270" height="140" rx="10" fill="#141a2c" stroke="#2d3b58"/>
+      <text x="743" y="436" font-size="13.5" font-weight="bold" fill="#e8eefb">PlaybackClock 33ms</text>
+      <text x="743" y="458" font-size="12" fill="#b9c8e8">pos=锚点+(now−anchor)</text>
+      <text x="743" y="478" font-size="12" fill="#b9c8e8">sync() 重新锚定</text>
+      <rect x="727" y="580" width="270" height="140" rx="10" fill="#141a2c" stroke="#2d3b58"/>
+      <text x="743" y="606" font-size="13.5" font-weight="bold" fill="#e8eefb">MediaSessionWorker</text>
+      <text x="743" y="628" font-size="12" fill="#b9c8e8">位置外推 速率×耗时</text>
+      <text x="743" y="648" font-size="12" fill="#b9c8e8">快照去重(&lt;1.5s不发)</text>
+      <rect x="727" y="750" width="270" height="140" rx="10" fill="#10162a" stroke="#2a3852"/>
+      <text x="743" y="776" font-size="13.5" font-weight="bold" fill="#e8eefb">SMTC Timeline</text>
+      <text x="743" y="798" font-size="12" fill="#b9c8e8">100ns 时间戳→毫秒</text>
+      <text x="743" y="818" font-size="12" fill="#b9c8e8">PlaybackRate 钳 0~4</text>
+      <line x1="862" y1="220" x2="862" y2="234" stroke="#6aa6ff" stroke-width="2.5" marker-end="url(#s-blue)"/>
+      <line x1="862" y1="386" x2="862" y2="400" stroke="#6aa6ff" stroke-width="2.5" marker-end="url(#s-blue)"/>
+      <line x1="862" y1="556" x2="862" y2="570" stroke="#6aa6ff" stroke-width="2.5" marker-end="url(#s-blue)"/>
+      <line x1="862" y1="726" x2="862" y2="740" stroke="#6aa6ff" stroke-width="2.5" marker-end="url(#s-blue)"/>
+    </g>
+
+    <!-- 泳道4 频谱流 x=1018 -->
+    <g>
+      <rect x="1018" y="74" width="270" height="140" rx="10" fill="#141a2c" stroke="#5ee08a" stroke-width="1.8"/>
+      <text x="1034" y="100" font-size="13.5" font-weight="bold" fill="#a8f5c4">SpectrumView 柱/波</text>
+      <text x="1034" y="122" font-size="12" fill="#b9c8e8">peak-hold 峰值衰减</text>
+      <text x="1034" y="142" font-size="12" fill="#b9c8e8">待机呼吸动画</text>
+      <rect x="1018" y="240" width="270" height="140" rx="10" fill="#182542" stroke="#4f8cff" stroke-width="1.8"/>
+      <text x="1034" y="266" font-size="13.5" font-weight="bold" fill="#7fb0ff">player.spectrum (48带)</text>
+      <rect x="1018" y="410" width="270" height="140" rx="10" fill="#141a2c" stroke="#2d3b58"/>
+      <text x="1034" y="436" font-size="13.5" font-weight="bold" fill="#e8eefb">SpectrumProvider</text>
+      <text x="1034" y="458" font-size="12" fill="#b9c8e8">attack0.55/release0.80</text>
+      <text x="1034" y="478" font-size="12" fill="#b9c8e8">FFT 对数分带 30Hz~16k</text>
+      <text x="1034" y="498" font-size="12" fill="#b9c8e8">噪声门+sqrt感知压缩</text>
+      <rect x="1018" y="580" width="270" height="140" rx="10" fill="#141a2c" stroke="#2d3b58"/>
+      <text x="1034" y="606" font-size="13.5" font-weight="bold" fill="#e8eefb">AudioCaptureWorker</text>
+      <text x="1034" y="628" font-size="12" fill="#b9c8e8">mono 混音(兼容4格式)</text>
+      <text x="1034" y="648" font-size="12" fill="#b9c8e8">攒1024帧·50%overlap</text>
+      <text x="1034" y="668" font-size="12" fill="#b9c8e8">失败→正弦模拟节奏</text>
+      <rect x="1018" y="750" width="270" height="140" rx="10" fill="#10162a" stroke="#2a3852"/>
+      <text x="1034" y="776" font-size="13.5" font-weight="bold" fill="#e8eefb">WASAPI Loopback</text>
+      <text x="1034" y="798" font-size="12" fill="#b9c8e8">Shared + 5s 缓冲</text>
+      <text x="1034" y="818" font-size="12" fill="#b9c8e8">事件回调驱动</text>
+      <line x1="1153" y1="220" x2="1153" y2="234" stroke="#5ee08a" stroke-width="2.5" marker-end="url(#s-green)"/>
+      <line x1="1153" y1="386" x2="1153" y2="400" stroke="#5ee08a" stroke-width="2.5" marker-end="url(#s-green)"/>
+      <line x1="1153" y1="556" x2="1153" y2="570" stroke="#5ee08a" stroke-width="2.5" marker-end="url(#s-green)"/>
+      <line x1="1153" y1="726" x2="1153" y2="740" stroke="#5ee08a" stroke-width="2.5" marker-end="url(#s-green)"/>
+    </g>
+
+    <!-- 泳道5 主题配色流 x=1309 -->
+    <g>
+      <rect x="1309" y="74" width="270" height="140" rx="10" fill="#141a2c" stroke="#ff8fb3" stroke-width="1.8"/>
+      <text x="1325" y="100" font-size="13.5" font-weight="bold" fill="#ffc2d6">背景渐变/频谱/歌词色</text>
+      <text x="1325" y="122" font-size="12" fill="#b9c8e8">bgOpacity 透明度</text>
+      <rect x="1309" y="240" width="270" height="140" rx="10" fill="#182542" stroke="#4f8cff" stroke-width="1.8"/>
+      <text x="1325" y="266" font-size="13.5" font-weight="bold" fill="#7fb0ff">player.accent</text>
+      <text x="1325" y="288" font-size="12" fill="#c9d6f0">bgColor1/2 · textColor</text>
+      <rect x="1309" y="410" width="270" height="140" rx="10" fill="#141a2c" stroke="#2d3b58"/>
+      <text x="1325" y="436" font-size="13.5" font-weight="bold" fill="#e8eefb">ThemeEngine</text>
+      <text x="1325" y="458" font-size="12" fill="#b9c8e8">56px 量化4bit取主色</text>
+      <text x="1325" y="478" font-size="12" fill="#b9c8e8">HSL 派生 accent/bg1/bg2</text>
+      <text x="1325" y="498" font-size="12" fill="#b9c8e8">text 固定浅色</text>
+      <rect x="1309" y="580" width="270" height="140" rx="10" fill="#141a2c" stroke="#2d3b58"/>
+      <text x="1325" y="606" font-size="13.5" font-weight="bold" fill="#e8eefb">封面图即输入</text>
+      <text x="1325" y="628" font-size="12" fill="#b9c8e8">analyze() 异步线程池</text>
+      <rect x="1309" y="750" width="270" height="140" rx="10" fill="#10162a" stroke="#2a3852"/>
+      <text x="1325" y="776" font-size="13.5" font-weight="bold" fill="#e8eefb">封面缩略图</text>
+      <text x="1325" y="798" font-size="12" fill="#b9c8e8">（来自 SMTC ②封面流）</text>
+      <line x1="1444" y1="220" x2="1444" y2="234" stroke="#ff8fb3" stroke-width="2.5" marker-end="url(#s-purple)"/>
+      <line x1="1444" y1="386" x2="1444" y2="400" stroke="#ff8fb3" stroke-width="2.5" marker-end="url(#s-purple)"/>
+      <line x1="1444" y1="556" x2="1444" y2="570" stroke="#ff8fb3" stroke-width="2.5" marker-end="url(#s-purple)"/>
+      <line x1="1444" y1="726" x2="1444" y2="740" stroke="#ff8fb3" stroke-width="2.5" marker-end="url(#s-purple)"/>
+    </g>
+
+    <!-- 底部公共说明 -->
+    <rect x="145" y="916" width="1434" height="72" rx="10" fill="#182542" stroke="#4f8cff" stroke-width="1.8"/>
+    <text x="862" y="940" text-anchor="middle" font-size="13.5" font-weight="bold" fill="#7fb0ff">L2 公共件（横跨所有链路）：PlayerController 六槽汇聚 · ConfigStore 配置广播 · WindowHost 挂载/穿透/自愈</text>
+    <text x="862" y="964" text-anchor="middle" font-size="12" fill="#c9d6f0">跨线程 = Qt::QueuedConnection + 值类型快照；界面零轮询，纯事件驱动向上推送</text>
+    <text x="862" y="984" text-anchor="middle" font-size="11.5" fill="#7d8fb3">主线程渲染：QML 属性绑定 + 动画 → Qt Quick 场景图 → DWM 合成到壁纸层</text>
+  </svg>
+  <p class="note">示意图：五条数据链路自顶向下溯源。箭头方向=数据实际流动方向（系统→界面）；阅读顺序=从界面逆流到系统。</p>
+</div>
+</body>
+</html>

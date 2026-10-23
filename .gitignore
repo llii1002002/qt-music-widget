@@ -1,0 +1,44 @@
+# ===== MusicDesktop（Qt 音乐挂件）项目 .gitignore =====
+
+# ---------- 编译产物 ----------
+debug/
+release/
+build/
+build-*/
+bin/
+*.o
+*.obj
+*.exe
+*.dll
+*.a
+*.lib
+*.pdb
+*.ilk
+
+# ---------- qmake / Qt Creator 生成物 ----------
+Makefile
+Makefile.*
+.qmake.stash
+*.pro.user
+*.pro.user.*
+*_autogen/
+moc_*.cpp
+ui_*.h
+qrc_*.cpp
+
+# ---------- Qt Creator 配置 ----------
+.qtcreator/
+.qtc_clangd/
+
+# ---------- 日志 / 临时 / 空文件 ----------
+*.log
+smtc_current.jpg
+stdout.log
+stderr.log
+
+# ---------- 保留说明 ----------
+# 以下内容【要提交】：
+# - src/ 源码目录
+# - cover_*.png 封面素材、shot_full.png / user_shot.png 效果截图
+# - build_debug.bat / build_release.bat 构建脚本
+# - MusicDesktop_架构图.html / MusicDesktop_数据溯源图.html 设计文档

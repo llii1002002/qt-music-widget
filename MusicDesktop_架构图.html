@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MusicDesktop 项目架构拆解</title>
+<style>
+  html,body{margin:0;padding:0;background:#0b101c;font-family:"Microsoft YaHei UI","Segoe UI",sans-serif;color:#dfe7f5;}
+  .wrap{width:100%;max-width:1700px;margin:0 auto;padding:16px;box-sizing:border-box;}
+  h1{font-size:24px;margin:10px 0 4px;color:#eef2ff;text-align:center;}
+  .sub{text-align:center;font-size:14px;color:#8fa3c8;margin:0 0 16px;}
+  svg{width:100%;height:auto;display:block;}
+  .note{font-size:12px;color:#5d6d8f;text-align:center;margin-top:10px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>MusicDesktop — Qt 桌面歌词 / 音乐壁纸组件 架构拆解</h1>
+  <p class="sub">Qt 5.14.2 + QML · C++17 (MSVC) · WinRT SMTC · WASAPI Loopback · WorkerW 桌面挂载 · 网易云歌词 API</p>
+  <svg viewBox="0 0 1600 1160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="MusicDesktop 分层架构与数据流">
+    <defs>
+      <marker id="mk-cyan" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#35c6e8"/></marker>
+      <marker id="mk-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#5ee08a"/></marker>
+      <marker id="mk-orange" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#ffb454"/></marker>
+      <marker id="mk-purple" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#b58bff"/></marker>
+      <marker id="mk-gray" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#8b93a7"/></marker>
+      <marker id="mk-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#6aa6ff"/></marker>
+    </defs>
+
+    <rect x="0" y="0" width="1600" height="1160" fill="#0b101c"/>
+
+    <!-- 层带 L1 -->
+    <rect x="20" y="114" width="150" height="252" rx="10" fill="#ffffff08"/>
+    <text x="95" y="150" text-anchor="middle" font-size="16.5" font-weight="bold" fill="#b9c8e8">QML 界面层</text>
+    <text x="95" y="174" text-anchor="middle" font-size="12.5" fill="#7d8fb3">主线程渲染</text>
+    <rect x="190" y="100" width="980" height="280" rx="10" fill="#141a2c" stroke="#2d3b58" stroke-width="1.5"/>
+    <text x="208" y="130" font-size="15.5" font-weight="bold" fill="#e8eefb">MainWindow.qml — 全屏透明 WallpaperWindow</text>
+    <rect x="210" y="146" width="680" height="52" rx="8" fill="#10162a" stroke="#2a3852"/>
+    <text x="226" y="169" font-size="13.5" fill="#b9c8e8">LyricView.qml — 桌面歌词（Repeater + 平滑滚动 + 当前行放大）</text>
+    <text x="226" y="189" font-size="12" fill="#7d8fb3">位置 = (index − lyricScroll) × 行距，当前行加粗/放大/高亮</text>
+    <rect x="210" y="210" width="680" height="52" rx="8" fill="#10162a" stroke="#2a3852"/>
+    <text x="226" y="233" font-size="13.5" fill="#b9c8e8">AlbumCover.qml — 黑胶唱片封面（圆形遮罩 + 24s 旋转 + 同心圆环）</text>
+    <text x="226" y="253" font-size="12" fill="#7d8fb3">封面 image://cover · 渐变占位 ♪ · 暂停呼吸点</text>
+    <rect x="210" y="274" width="680" height="52" rx="8" fill="#10162a" stroke="#2a3852"/>
+    <text x="226" y="297" font-size="13.5" fill="#b9c8e8">SpectrumView.qml — 频谱（bars 柱状 + peak-hold / wave Canvas 贝塞尔）</text>
+    <text x="226" y="317" font-size="12" fill="#7d8fb3">normal / mirror 双模式 · 待机呼吸动画 · 贴任务栏上沿</text>
+    <text x="910" y="150" font-size="13" fill="#7d8fb3">由 WindowHost 挂载到</text>
+    <text x="910" y="170" font-size="13" fill="#7d8fb3">桌面壁纸层（图标之下）</text>
+    <text x="910" y="190" font-size="13" fill="#7d8fb3">鼠标穿透：</text>
+    <text x="910" y="210" font-size="13" fill="#7d8fb3">WM_NCHITTEST → HTTRANSPARENT</text>
+    <rect x="1200" y="100" width="380" height="280" rx="10" fill="#141a2c" stroke="#2d3b58" stroke-width="1.5"/>
+    <text x="1218" y="130" font-size="15" font-weight="bold" fill="#e8eefb">SettingsPanel.qml — 设置面板</text>
+    <text x="1218" y="156" font-size="13" fill="#b9c8e8">5 个 Tab：通用 / 歌词 / 封面 / 频谱 / 主题+性能</text>
+    <text x="1218" y="178" font-size="12.5" fill="#7d8fb3">NumSpin.qml 定制深色 SpinBox（可输入+步进）</text>
+    <text x="1218" y="200" font-size="12.5" fill="#7d8fb3">系统托盘菜单 ↔ AppActions ↔ 面板显隐</text>
+    <text x="1218" y="230" font-size="12" fill="#5d6d8f">全部设置写回 cfg（setValue → changed 广播）</text>
+
+    <!-- 层带 L2 -->
+    <rect x="20" y="414" width="150" height="152" rx="10" fill="#ffffff08"/>
+    <text x="95" y="450" text-anchor="middle" font-size="16.5" font-weight="bold" fill="#b9c8e8">核心门面层</text>
+    <text x="95" y="474" text-anchor="middle" font-size="12.5" fill="#7d8fb3">主线程</text>
+    <rect x="190" y="400" width="700" height="180" rx="10" fill="#182542" stroke="#4f8cff" stroke-width="2"/>
+    <text x="208" y="430" font-size="16" font-weight="bold" fill="#7fb0ff">PlayerController — QML 全局门面 player（业务枢纽）</text>
+    <text x="208" y="456" font-size="13" fill="#c9d6f0">媒体属性：hasSession / playing / title / artist / positionMs / durationMs / coverUrl</text>
+    <text x="208" y="478" font-size="13" fill="#c9d6f0">歌词属性：lyricTexts / currentLine / lyricScroll(小数行号) / noLyrics</text>
+    <text x="208" y="500" font-size="13" fill="#c9d6f0">频谱：spectrum ｜ 配色：accent / bgColor1 / bgColor2 / textColor</text>
+    <text x="208" y="530" font-size="12.5" fill="#7d8fb3">内部子件：PlaybackClock(33ms 外推) · SpectrumProvider(平滑) · CoverImageProvider(12 张缓存)</text>
+    <text x="208" y="552" font-size="12" fill="#5d6d8f">onSnapshot / onCover / onBands / onClockTick / onPalette / onConfigChanged 六个槽汇聚所有数据源</text>
+    <rect x="920" y="400" width="340" height="180" rx="10" fill="#141a2c" stroke="#2d3b58" stroke-width="1.5"/>
+    <text x="938" y="430" font-size="15" font-weight="bold" fill="#e8eefb">ConfigStore — 配置持久化 cfg</text>
+    <text x="938" y="456" font-size="13" fill="#b9c8e8">QSettings INI 存储</text>
+    <text x="938" y="478" font-size="13" fill="#b9c8e8">默认值 + 类型/范围严格校验</text>
+    <text x="938" y="500" font-size="13" fill="#b9c8e8">300ms 防抖保存 · changed 广播</text>
+    <text x="938" y="530" font-size="12" fill="#7d8fb3">损坏 INI 自动回退默认值</text>
+    <text x="938" y="552" font-size="12" fill="#7d8fb3">CfgKey 常量集中管理所有键</text>
+    <rect x="1290" y="400" width="290" height="180" rx="10" fill="#141a2c" stroke="#2d3b58" stroke-width="1.5"/>
+    <text x="1308" y="430" font-size="15" font-weight="bold" fill="#e8eefb">WindowHost — 桌面挂载宿主</text>
+    <text x="1308" y="456" font-size="13" fill="#b9c8e8">findWorkerW → SetParent（Mode A）</text>
+    <text x="1308" y="478" font-size="13" fill="#b9c8e8">回退：顶层置底全屏（Mode B）</text>
+    <text x="1308" y="500" font-size="13" fill="#b9c8e8">2s 自愈 watchdog · surface 重建重挂</text>
+    <text x="1308" y="530" font-size="12" fill="#7d8fb3">监听 TaskbarCreated / 显示变化</text>
+    <text x="1308" y="552" font-size="12" fill="#7d8fb3">attach(wallpaper) 接管 QQuickWindow</text>
+
+    <!-- 层带 L3 -->
+    <rect x="20" y="614" width="150" height="132" rx="10" fill="#ffffff08"/>
+    <text x="95" y="650" text-anchor="middle" font-size="16.5" font-weight="bold" fill="#b9c8e8">业务引擎层</text>
+    <text x="95" y="674" text-anchor="middle" font-size="12.5" fill="#7d8fb3">主线程 · QtConcurrent</text>
+    <rect x="190" y="600" width="280" height="160" rx="10" fill="#141a2c" stroke="#2d3b58" stroke-width="1.5"/>
+    <text x="208" y="628" font-size="14.5" font-weight="bold" fill="#e8eefb">LyricsEngine — 歌词引擎</text>
+    <text x="208" y="652" font-size="12.5" fill="#b9c8e8">LRC 解析（多时间戳/排序）</text>
+    <text x="208" y="672" font-size="12.5" fill="#b9c8e8">本地扫描模糊匹配（≤4000 文件）</text>
+    <text x="208" y="692" font-size="12.5" fill="#b9c8e8">兜底：网易云 API 搜索+取词</text>
+    <text x="208" y="712" font-size="12" fill="#7d8fb3">token 递增防切歌乱序</text>
+    <text x="208" y="732" font-size="12" fill="#7d8fb3">scrollAt → 小数行号平滑滚动</text>
+    <rect x="500" y="600" width="320" height="160" rx="10" fill="#141a2c" stroke="#2d3b58" stroke-width="1.5"/>
+    <text x="518" y="628" font-size="14.5" font-weight="bold" fill="#e8eefb">SpectrumProvider — 频谱平滑</text>
+    <text x="518" y="656" font-size="12.5" fill="#b9c8e8">attack / release 双系数</text>
+    <text x="518" y="678" font-size="12.5" fill="#b9c8e8">上升快、下降慢（快升慢降）</text>
+    <text x="518" y="700" font-size="12.5" fill="#b9c8e8">归一化钳制到 0..1</text>
+    <rect x="840" y="600" width="320" height="160" rx="10" fill="#141a2c" stroke="#2d3b58" stroke-width="1.5"/>
+    <text x="858" y="628" font-size="14.5" font-weight="bold" fill="#e8eefb">ThemeEngine — 主题引擎</text>
+    <text x="858" y="656" font-size="12.5" fill="#b9c8e8">封面缩到 56px 量化 4bit/通道</text>
+    <text x="858" y="678" font-size="12.5" fill="#b9c8e8">饱和度加权取 top4 桶平均主色</text>
+    <text x="858" y="700" font-size="12.5" fill="#b9c8e8">HSL 派生 accent / bg1 / bg2 / text</text>
+    <text x="858" y="728" font-size="12" fill="#7d8fb3">QtConcurrent 异步，回主线程发 paletteReady</text>
+
+    <!-- 层带 L4 -->
+    <rect x="20" y="794" width="150" height="132" rx="10" fill="#ffffff08"/>
+    <text x="95" y="830" text-anchor="middle" font-size="16.5" font-weight="bold" fill="#b9c8e8">系统工作线程</text>
+    <text x="95" y="854" text-anchor="middle" font-size="12.5" fill="#7d8fb3">QThread × 3 (MTA)</text>
+    <rect x="190" y="780" width="280" height="160" rx="10" fill="#141a2c" stroke="#2d3b58" stroke-width="1.5"/>
+    <text x="208" y="808" font-size="14.5" font-weight="bold" fill="#e8eefb">MediaSessionWorker — SMTC 线程</text>
+    <text x="208" y="832" font-size="12.5" fill="#b9c8e8">WinRT 会话/播放/时间线事件</text>
+    <text x="208" y="852" font-size="12.5" fill="#b9c8e8">AUMID 过滤网易云（cloudmusic等）</text>
+    <text x="208" y="872" font-size="12.5" fill="#b9c8e8">快照去重 · 封面 500ms 宽限期</text>
+    <text x="208" y="896" font-size="12" fill="#7d8fb3">位置外推：LastUpdated + 速率×耗时</text>
+    <text x="208" y="916" font-size="12" fill="#7d8fb3">值类型 MediaSnapshot 跨线程</text>
+    <rect x="500" y="780" width="320" height="160" rx="10" fill="#141a2c" stroke="#2d3b58" stroke-width="1.5"/>
+    <text x="518" y="808" font-size="14.5" font-weight="bold" fill="#e8eefb">AudioCaptureWorker — WASAPI 线程</text>
+    <text x="518" y="832" font-size="12.5" fill="#b9c8e8">Loopback 环路捕获系统输出 → mono 混音</text>
+    <text x="518" y="852" font-size="12.5" fill="#b9c8e8">自实现 FFT（Hann 窗 + 蝶形）</text>
+    <text x="518" y="872" font-size="12.5" fill="#b9c8e8">30Hz~16kHz 对数分带 → 0..1 电平</text>
+    <text x="518" y="896" font-size="12" fill="#7d8fb3">50% overlap · fps 限流</text>
+    <text x="518" y="916" font-size="12" fill="#7d8fb3">捕获失败回退模拟节奏</text>
+    <rect x="840" y="780" width="260" height="160" rx="10" fill="#141a2c" stroke="#2d3b58" stroke-width="1.5"/>
+    <text x="858" y="808" font-size="14.5" font-weight="bold" fill="#e8eefb">DeviceMonitor — 设备通知</text>
+    <text x="858" y="836" font-size="12.5" fill="#b9c8e8">IMMNotificationClient</text>
+    <text x="858" y="858" font-size="12.5" fill="#b9c8e8">默认输出设备变化</text>
+    <text x="858" y="880" font-size="12.5" fill="#b9c8e8">→ 通知音频线程重启捕获</text>
+
+    <!-- 层带 L5 -->
+    <rect x="20" y="974" width="150" height="132" rx="10" fill="#ffffff08"/>
+    <text x="95" y="1010" text-anchor="middle" font-size="16.5" font-weight="bold" fill="#b9c8e8">Windows 系统层</text>
+    <text x="95" y="1034" text-anchor="middle" font-size="12.5" fill="#7d8fb3">原生 API</text>
+    <rect x="190" y="960" width="280" height="160" rx="10" fill="#10162a" stroke="#2a3852" stroke-width="1.5"/>
+    <text x="208" y="988" font-size="14.5" font-weight="bold" fill="#e8eefb">SMTC (WinRT)</text>
+    <text x="208" y="1012" font-size="12.5" fill="#b9c8e8">系统媒体传输控制</text>
+    <text x="208" y="1034" font-size="12.5" fill="#b9c8e8">提供：标题/歌手/时长/位置</text>
+    <text x="208" y="1056" font-size="12.5" fill="#b9c8e8">播放状态/封面缩略图</text>
+    <rect x="500" y="960" width="320" height="160" rx="10" fill="#10162a" stroke="#2a3852" stroke-width="1.5"/>
+    <text x="518" y="988" font-size="14.5" font-weight="bold" fill="#e8eefb">WASAPI 音频引擎</text>
+    <text x="518" y="1012" font-size="12.5" fill="#b9c8e8">共享模式环路捕获</text>
+    <text x="518" y="1034" font-size="12.5" fill="#b9c8e8">系统所有输出流混音</text>
+    <text x="518" y="1056" font-size="12.5" fill="#b9c8e8">事件驱动 + 5s 环形缓冲</text>
+    <rect x="840" y="960" width="260" height="160" rx="10" fill="#10162a" stroke="#6aa6ff" stroke-width="1.5"/>
+    <text x="858" y="988" font-size="14.5" font-weight="bold" fill="#9cc2ff">WorkerW / Progman / DWM</text>
+    <text x="858" y="1012" font-size="12.5" fill="#b9c8e8">桌面壁纸层（图标之下）</text>
+    <text x="858" y="1034" font-size="12.5" fill="#b9c8e8">WindowHost SetParent 挂载</text>
+    <text x="858" y="1056" font-size="12.5" fill="#b9c8e8">QML 窗口到这里 (Mode A)</text>
+    <text x="858" y="1080" font-size="11.5" fill="#5d6d8f">Mode B: 顶层 HWND_BOTTOM 置底</text>
+    <rect x="1130" y="960" width="280" height="160" rx="10" fill="#10162a" stroke="#2a3852" stroke-width="1.5"/>
+    <text x="1148" y="988" font-size="14.5" font-weight="bold" fill="#e8eefb">歌词源</text>
+    <text x="1148" y="1012" font-size="12.5" fill="#b9c8e8">本地 .lrc 文件（配置文件夹）</text>
+    <text x="1148" y="1034" font-size="12.5" fill="#b9c8e8">网易云音乐 Web API</text>
+    <text x="1148" y="1056" font-size="12.5" fill="#b9c8e8">搜索 + 歌词接口</text>
+
+    <!-- 数据流箭头 -->
+    <line x1="330" y1="960" x2="330" y2="945" stroke="#35c6e8" stroke-width="2.5" marker-end="url(#mk-cyan)"/>
+    <text x="342" y="956" font-size="12" fill="#35c6e8">WinRT 会话事件</text>
+    <line x1="640" y1="960" x2="640" y2="945" stroke="#5ee08a" stroke-width="2.5" marker-end="url(#mk-green)"/>
+    <text x="652" y="956" font-size="12" fill="#5ee08a">PCM 环路数据</text>
+    <polyline points="330,780 172,780 172,580 188,580" fill="none" stroke="#35c6e8" stroke-width="2.5" marker-end="url(#mk-cyan)"/>
+    <text x="180" y="770" font-size="12" fill="#35c6e8" transform="rotate(-90 180 770)">snapshotChanged / coverReady</text>
+    <line x1="640" y1="780" x2="640" y2="764" stroke="#5ee08a" stroke-width="2.5" marker-end="url(#mk-green)"/>
+    <line x1="640" y1="600" x2="640" y2="584" stroke="#5ee08a" stroke-width="2.5" marker-end="url(#mk-green)"/>
+    <text x="650" y="596" font-size="12" fill="#5ee08a">bandsReady → spectrum 属性</text>
+    <line x1="840" y1="860" x2="824" y2="860" stroke="#ffd166" stroke-width="2.5" marker-end="url(#mk-orange)"/>
+    <text x="756" y="852" font-size="11.5" fill="#ffd166">设备变化→重启捕获</text>
+    <polyline points="1310,960 1310,770 330,770 330,762" fill="none" stroke="#ffb454" stroke-width="2.5" marker-end="url(#mk-orange)"/>
+    <text x="1150" y="786" font-size="12" fill="#ffb454">LRC 文本 / 歌词 JSON</text>
+    <line x1="1210" y1="380" x2="1210" y2="398" stroke="#8b93a7" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#mk-gray)"/>
+    <text x="1218" y="394" font-size="11.5" fill="#8b93a7">setValue</text>
+    <line x1="920" y1="490" x2="894" y2="490" stroke="#8b93a7" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#mk-gray)"/>
+    <text x="900" y="482" font-size="11.5" fill="#8b93a7">changed 广播</text>
+    <line x1="880" y1="598" x2="880" y2="582" stroke="#b58bff" stroke-width="2.5" marker-end="url(#mk-purple)"/>
+    <line x1="880" y1="582" x2="880" y2="596" stroke="#b58bff" stroke-width="2.5" marker-end="url(#mk-purple)"/>
+    <text x="856" y="576" font-size="11.5" fill="#b58bff">封面分析 / paletteReady</text>
+    <line x1="540" y1="400" x2="540" y2="384" stroke="#35c6e8" stroke-width="2.5" marker-end="url(#mk-cyan)"/>
+    <text x="550" y="396" font-size="12" fill="#35c6e8">Q_PROPERTY 属性绑定（媒体/歌词/频谱/配色）</text>
+    <line x1="1435" y1="580" x2="1435" y2="700" stroke="#6aa6ff" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#mk-blue)"/>
+    <text x="1446" y="640" font-size="12" fill="#6aa6ff">SetParent 挂载</text>
+    <text x="1446" y="660" font-size="12" fill="#6aa6ff">到壁纸层</text>
+
+    <rect x="1420" y="1000" width="160" height="140" rx="10" fill="#10162a" stroke="#2a3852"/>
+    <text x="1500" y="1022" text-anchor="middle" font-size="13" font-weight="bold" fill="#c9d6f0">图例</text>
+    <line x1="1432" y1="1038" x2="1462" y2="1038" stroke="#35c6e8" stroke-width="2.5"/><text x="1470" y="1042" font-size="11.5" fill="#b9c8e8">媒体信息流</text>
+    <line x1="1432" y1="1058" x2="1462" y2="1058" stroke="#5ee08a" stroke-width="2.5"/><text x="1470" y="1062" font-size="11.5" fill="#b9c8e8">频谱数据流</text>
+    <line x1="1432" y1="1078" x2="1462" y2="1078" stroke="#ffb454" stroke-width="2.5"/><text x="1470" y="1082" font-size="11.5" fill="#b9c8e8">歌词数据流</text>
+    <line x1="1432" y1="1098" x2="1462" y2="1098" stroke="#b58bff" stroke-width="2.5"/><text x="1470" y="1102" font-size="11.5" fill="#b9c8e8">封面/主题流</text>
+    <line x1="1432" y1="1118" x2="1462" y2="1118" stroke="#8b93a7" stroke-width="2" stroke-dasharray="5 3"/><text x="1470" y="1122" font-size="11.5" fill="#b9c8e8">配置读写流</text>
+  </svg>
+  <p class="note">示意图：MusicDesktop 五层架构与四条数据流。深色背景框为各层模块，彩色箭头为数据流（图例见右下角）。</p>
+</div>
+</body>
+</html>
